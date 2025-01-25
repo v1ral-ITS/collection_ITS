@@ -1,0 +1,32 @@
+#### cp command with progress bar in shell 
+#!/bin/bash
+
+# Define the progress bar function
+progress_bar() {
+  local size=$1
+  local copied=$2
+  local percent=$(( (copied * 100) / size ))
+  local bar=$(( (percent * 50) / 100 ))
+  printf "\r[%-${bar}s] %3d%%" $(printf '%*s' $bar '') $percent
+}
+
+# Define the cp command with progress
+cp_progress() {
+  local src=$1
+  local dst=$2
+  local size=$(stat -c%s "$src")
+  local copied=0
+
+  # Copy file in chunks, updating progress bar
+  dd if="$src" of="$dst" bs=1M conv=notrunc iflag=fullblock 2>/dev/null |
+  while read -r _; do
+    ((copied += 1048576)) # 1M chunk
+    progress_bar $size $copied
+  done
+
+  # Finalize progress bar
+  printf "\n"
+}
+
+# Call the cp command with progress
+cp_progress "$1" "$2"
